@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outfit Genius</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+
+<body>
+    <header>
+        <img src="../static/images/logo.png" alt="outfitgenius" class="logo">
+    </header>
+
+    <div class="box">
+        <div id="loading" class="loading"></div>
+
+    <form action="/data" method="post">
+        <div class="category_area">
+            <label for="category">カテゴリー</label><br>
+            <input type="text" id="category" name="category" class="input_area"><br>
+                <button type='button' class="btn_category" value="トップス">トップス</button>
+                <button type='button' class="btn_category" value="デニムパンツ">デニムパンツ</button>
+                <button type='button' class="btn_category" value="ローファー">ローファー</button>
+                <!-- ▼▼▼ hotkeyword エリア ▼▼▼ -->
+                <div class="hotkeyword_area"></div>
+                <!-- ▲▲▲ hotkeyword エリア ▲▲▲ -->
+        </div>
+
+        <div class="color_area">
+            <label for="color">カラー</label><br>
+            <input type="text" id="color" name="color" class="input_area"><br>
+                    <button type='button' class="btn_white btn_color" value="白"></button>
+                    <button type='button' class="btn_black btn_color" value="ブラック"></button>
+                    <button type='button' class="btn_gray btn_color" value="グレー"></button>
+                    <button type='button' class="btn_brown btn_color" value="ブラウン"></button>
+                    <button type='button' class="btn_beige btn_color" value="ベージュ"></button><br>
+                <div class="btn_color_center">
+                    <button type='button' class="btn_green btn_color" value="グリーン"></button>
+                    <button type='button' class="btn_blue btn_color" value="ブルー"></button>
+                    <button type='button' class="btn_purple btn_color" value="パープル"></button>
+                    <button type='button' class="btn_yellow btn_color" value="イエロー"></button>
+                    <button type='button' class="btn_pink btn_color" value="ピンク"></button><br>
+                </div>
+                    <button type='button' class="btn_red btn_color" value="赤"></button>
+                    <button type='button' class="btn_orange btn_color" value="オレンジ"></button>
+                    <button type='button' class="btn_silver btn_color" value="シルバー"></button>
+                    <button type='button' class="btn_gold btn_color" value="ゴールド"></button>
+        </div>
+        
+        <!-- <input type="submit" class="submit" value="アドバイスを受ける" disabled> -->
+        <input type="submit" class="submit" value="アドバイスを受ける" onclick="loading();" disabled>
+    </form>
+
+    <!-- ▼▼▼ アドバイス出力エリア ▼▼▼ -->
+    <div class="response_area">
+        <!-- 変数responseに値があるとき -->
+        {% if response %}
+        {{ response }} 
+        <!-- 変数nameに値がないとき -->
+        {% endif %} 
+    </div>
+    <!-- ▲▲▲ アドバイス出力エリア ▲▲▲ -->
+
+</div>
+
+    <!-- jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- bodyの閉じタグの直前にjs読み込みする -->
+    <script src="static/js/script.js"></script>
+
+    <!--** 以下Firebase **-->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, onChildAdded, remove, onChildRemoved, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        // firebase-database.js(認証用)　を読み込んで　青文字を使うことを宣言
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
+
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+    
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+        //   apiKey: apikey.apikey_firebase,
+        apiKey: "API KEY",
+        authDomain: "fashion-recommend.firebaseapp.com",
+        projectId: "fashion-recommend",
+        storageBucket: "fashion-recommend.appspot.com",
+        messagingSenderId: "129612275827",
+        appId: "1:129612275827:web:c870ce9a9e6e17e1368a06"
+        };
+    
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        // Firebase-RealtimeDatabase接続
+        const db = getDatabase(app);
+        const dbRef = ref(db, 'fashion-recommend');
+
+
+        // firabaseデータ送信
+        $(".submit").on('click', function () {
+
+            // クリックされた時間を取得
+            let time_onclick = new Date();
+            console.log(typeof time_onclick, 'timestampの型');
+            console.log(time_onclick, 'timestampを表示');
+
+            const category = $("#category").val();
+            const color = $("#color").val();
+            console.log(category, ':categoryを表示', color, ':colorを表示');
+
+            // 作成したデータの塊を保存
+            const input_data = {
+                timestamp: serverTimestamp(), //ミリ秒(1000/1秒)で取得
+                category: category,
+                color: color,
+            }
+
+            const newPostRef = push(dbRef) // 保存のコード firebaseに送る準備
+            set(newPostRef, input_data); //firebaseの登録できる場所に保存する
+
+            // この下は消さない
+            console.log('送信処理完了');
+            });
+
+
+        //　受信処理を記述　ページ読み込み時
+        var arry_ctg = [];
+        jQuery(function(){
+        onChildAdded(dbRef, function (data) {
+            console.log('onChildAdded');
+
+            //　登録データ取得
+            const output_data = data.val();
+            console.log(output_data, '取得したデータの塊 output_data');
+            const key = data.key;
+            console.log(key, 'データの塊にアクセス key');
+
+            // 表示データの時間制限
+            var nowTime = $.now();
+            console.log(nowTime, '現在時刻');
+
+            // 表示時間
+            var minutes = 30;
+            var piriod = minutes * 60 * 1000;
+            console.log(piriod, 'hk表示時間');
+
+            //　設定時間以内なら表示 1分以上minute以内
+            if(60000 < (nowTime - output_data.timestamp) && (nowTime - output_data.timestamp) < piriod){
+                if(output_data.category != "トップス" && output_data.category != "デニムパンツ" &&output_data.category != "ローファー" ){
+                    arry_ctg.push(output_data.category);
+                    console.log(arry_ctg, 'arry_ctg');
+
+                    var arry_ctg_uq = arry_ctg.filter((x, i, self) => self.indexOf(x) === i);
+                    console.log(arry_ctg_uq, 'arry_ctg_uq');
+
+                    $('.btn_hkw').remove();
+                    $.each(arry_ctg_uq, function(index, element) {
+                        let h = `
+                            <button type='button' class="btn_category btn_hkw" value="${element}">
+                                ${element}
+                            </button>
+                            `;
+                        $('.hotkeyword_area').append(h);
+                    });
+                }
+
+
+                // es6のテンプレートリテラル
+                // let h = `
+                //     <button type='button' class="btn_category" value="${arry_ctg_uq[]}">
+                //         ${arry_ctg_uq[]}
+                //     </button>
+                //     `;
+
+
+                    // <div class="msg">
+                    //     <div class="icon_uname">
+                    //         <div class="icon"></div>
+                    //         <div class="uname">
+                    //             ${output_data.category}
+                    //         </div>
+                    //     </div>
+                    //     <div class="balloon">
+                    //         <div class="text">
+                    //             ${output_data.color}
+                    //         </div>
+                    //         <div class="time">
+                    //             ${output_data.timestamp}
+                    //         </div>
+                    //     </div>
+                    // </div>
+                    // `;
+                // htmlに埋め込む
+                //  jqueryのおまじない
+                // $(".hotkeyword_area").append(h);
+                }
+        });
+    });
+        
+
+    </script>
+
+</body>
+
+</html>
